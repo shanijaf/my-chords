@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chord Flashcard Maker</title>
+    <style>
+        :root { --primary: #6200ee; --bg: #f8f9fa; --wood: #3e2723; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 20px; text-align: center; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .fretboard { display: flex; justify-content: center; background: var(--wood); padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .string { width: 30px; height: 180px; border-left: 2px solid #ddd; position: relative; cursor: pointer; }
+        .string:last-child { border-right: 2px solid #ddd; }
+        .fret-marker { width: 20px; height: 20px; background: #ffeb3b; border-radius: 50%; position: absolute; left: 5px; transform: translateY(-50%); }
+        .mute-x { color: white; position: absolute; top: -25px; left: 8px; font-weight: bold; }
+        .controls { display: grid; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: var(--primary); color: white; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="editor">
+        <h2>🎸 Chord Maker</h2>
+        <input type="text" id="chordName" placeholder="Chord Name" style="width:90%; padding:10px; margin-bottom:10px;">
+        <div class="fretboard" id="editorBoard">
+            <div class="string" onclick="setFret(0, event)"></div><div class="string" onclick="setFret(1, event)"></div><div class="string" onclick="setFret(2, event)"></div><div class="string" onclick="setFret(3, event)"></div><div class="string" onclick="setFret(4, event)"></div><div class="string" onclick="setFret(5, event)"></div>
+        </div>
+        <button onclick="saveChord()">Save Chord</button>
+        <button style="background:#03dac6; color:black; margin-top:10px;" onclick="toggleMode()">Play Flashcards</button>
+    </div>
+    <div id="quiz" class="hidden">
+        <h2 id="qName">?</h2>
+        <div id="answer" class="hidden"><div class="fretboard" id="quizBoard"></div></div>
+        <button onclick="document.getElementById('answer').classList.toggle('hidden')">Show/Hide Answer</button>
+        <button style="background:#03dac6; color:black;" onclick="nextQ()">Next Chord</button>
+        <button style="background:#cf6679;" onclick="toggleMode()">Back to Editor</button>
+    </div>
+</div>
+<script>
+    let shape = [0,0,0,0,0,0]; let lib = JSON.parse(localStorage.getItem('chords')) || [];
+    function setFret(s, e) { let f = Math.ceil((e.clientY - e.target.getBoundingClientRect().top) / 35); shape[s] = (shape[s] === f) ? 0 : f; draw(shape, 'editorBoard'); }
+    function draw(sh, id) { 
+        const b = document.getElementById(id); b.querySelectorAll('.string').forEach((s, i) => {
+            s.innerHTML = sh[i] > 0 ? `<div class="fret-marker" style="top:${sh[i]*35}px"></div>` : '';
+        });
+    }
+    function saveChord() { let n = document.getElementById('chordName').value; if(!n) return; lib.push({n, sh:[...shape]}); localStorage.setItem('chords', JSON.stringify(lib)); alert('Saved!'); }
+    function toggleMode() { document.getElementById('editor').classList.toggle('hidden'); document.getElementById('quiz').classList.toggle('hidden'); if(lib.length) nextQ(); }
+    function nextQ() { let c = lib[Math.floor(Math.random()*lib.length)]; document.getElementById('qName').innerText = c.n; draw(c.sh, 'quizBoard'); document.getElementById('answer').classList.add('hidden'); }
+</script>
+</body>
+</html>
