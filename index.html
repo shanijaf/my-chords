@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StringTheory Pro | Dynamic Chord Lab</title>
+    <title>StringTheory Pro | Clean Chord Box</title>
     <style>
         :root {
             --bg: #09090b;
@@ -24,16 +24,12 @@
             padding: 1.5rem; margin: 0;
         }
 
-        .header { text-align: center; margin-bottom: 25px; }
-        .header h1 { font-size: 2rem; letter-spacing: 5px; margin: 0; font-weight: 200; }
-        .header span { color: var(--accent); font-weight: 900; }
-
-        .app-container {
+        .main-layout {
             display: grid;
-            grid-template-columns: 1fr 220px;
+            grid-template-columns: 1fr 240px;
             gap: 20px;
             width: 95%;
-            max-width: 1200px;
+            max-width: 1100px;
         }
 
         .dashboard {
@@ -42,7 +38,7 @@
             border-radius: 20px;
             border: 1px solid #25252a;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
 
@@ -58,11 +54,11 @@
         }
 
         .control-group { display: flex; flex-direction: column; gap: 6px; }
-        label { font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
+        label { font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; }
 
-        select, button {
+        select {
             background: #1c1c21; color: white; border: 1px solid #333;
-            padding: 12px; border-radius: 10px; cursor: pointer; font-size: 13px;
+            padding: 12px; border-radius: 10px; cursor: pointer;
         }
 
         .fretboard-wrap {
@@ -71,94 +67,91 @@
             overflow-x: auto;
         }
 
-        svg { width: 100%; height: auto; min-width: 1000px; }
-        .note-circle { transition: all 0.3s ease; }
-        .note-text { font-size: 10px; font-weight: 900; text-anchor: middle; pointer-events: none; }
+        svg { width: 100%; height: auto; }
+        .finger-text { font-size: 10px; font-weight: 900; text-anchor: middle; fill: #fff; }
         .mute-text { font-size: 14px; font-weight: 900; text-anchor: middle; fill: #ff4444; }
+        .note-text { font-size: 10px; font-weight: 900; text-anchor: middle; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>STRING<span>THEORY</span></h1>
-        <p style="color: #71717a; font-size: 0.8rem; margin: 5px 0 0 0;">Dynamic Tuning & Chord Synthesis</p>
-    </div>
+    <h1 style="letter-spacing: 6px; font-weight: 200; margin-bottom: 20px;">STRING<span style="color:var(--accent); font-weight:900;">THEORY</span></h1>
 
-    <div class="app-container">
+    <div class="main-layout">
         <div class="dashboard">
             <div class="control-group">
-                <label>Tuning Family</label>
+                <label>Tuning Selection</label>
                 <select id="tuningSelect">
-                    <optgroup label="Standard & Drop">
+                    <optgroup label="Standard/Drop">
                         <option value="E2,A2,D3,G3,B3,E4">Standard E</option>
+                        <option value="Eb2,Ab2,Db3,Gb3,Bb3,Eb4">Eb Standard</option>
                         <option value="D2,A2,D3,G3,B3,E4">Drop D</option>
                         <option value="C2,G2,C3,F3,A3,D4">Drop C</option>
                     </optgroup>
-                    <optgroup label="Open (Slide/Blues)">
+                    <optgroup label="Open/Modal">
                         <option value="D2,A2,D3,F#3,A3,D4">Open D</option>
                         <option value="D2,G2,D3,G3,B3,D4">Open G</option>
-                        <option value="C2,G2,C3,G3,C4,E4">Open C</option>
-                    </optgroup>
-                    <optgroup label="Modal & Folk">
                         <option value="D2,A2,D3,G3,A3,D4">DADGAD</option>
-                        <option value="D2,G2,D3,G3,C4,D4">Orkney</option>
                     </optgroup>
                 </select>
             </div>
             <div class="control-group">
-                <label>Root Note</label>
+                <label>Key</label>
                 <select id="rootSelect"></select>
             </div>
-            <div class="control-group">
-                <label>Chord Type</label>
+            <div class="control-group" style="grid-column: span 2;">
+                <label>Chord Library</label>
                 <select id="typeSelect">
-                    <option value="Major">Major (1-3-5)</option>
-                    <option value="Minor">Minor (1-b3-5)</option>
-                    <option value="7">Dominant 7 (1-3-5-b7)</option>
-                    <option value="Maj7">Major 7 (1-3-5-7)</option>
-                    <option value="m7">Minor 7 (1-b3-5-b7)</option>
-                    <option value="sus2">Sus2 (1-2-5)</option>
-                    <option value="sus4">Sus4 (1-4-5)</option>
-                    <option value="add9">Add9 (1-3-5-9)</option>
-                    <option value="dim">Diminished</option>
+                    <option value="Major">Major</option>
+                    <option value="Minor">Minor</option>
+                    <option value="7">Dominant 7</option>
+                    <option value="Maj7">Major 7</option>
+                    <option value="m7">Minor 7</option>
+                    <option value="sus2">Sus2</option>
+                    <option value="sus4">Sus4</option>
                 </select>
-            </div>
-            <div class="control-group">
-                <label>Capo</label>
-                <select id="capoSelect"><option value="0">Open (No Capo)</option></select>
             </div>
         </div>
 
         <div class="chord-card">
-            <div id="chordName" style="font-weight: 900; font-size: 1.2rem;">G Major</div>
-            <svg id="chordBox" width="160" height="180" viewBox="0 0 100 120"></svg>
-            <div id="stringLabels" style="font-size: 9px; font-weight: bold; margin-top: 10px; color: #555;"></div>
+            <div id="chordName" style="font-weight: 900; font-size: 1.2rem; margin-bottom: 10px;">C Major</div>
+            <svg id="chordBox" width="160" height="200" viewBox="0 0 100 120"></svg>
+            <div style="font-size: 9px; color: #888; margin-top: 5px;">(Fingers 1-4)</div>
         </div>
     </div>
 
     <div class="fretboard-wrap">
-        <svg id="fretboard" viewBox="0 0 1000 180" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="fretboard" viewBox="0 0 1000 160" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <script>
         const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-        const CHORD_FORMULAS = {
-            "Major": [0, 4, 7], "Minor": [0, 3, 7], "7": [0, 4, 7, 10], "Maj7": [0, 4, 7, 11],
-            "m7": [0, 3, 7, 10], "sus2": [0, 2, 7], "sus4": [0, 5, 7], "add9": [0, 4, 7, 14], "dim": [0, 3, 6]
+        
+        // Accurate Shape Data: -1 = Mute, 0 = Open, {f: fret, n: finger}
+        const SHAPES = {
+            "C Major": [-1, {f:3,n:3}, {f:2,n:2}, 0, {f:1,n:1}, 0],
+            "C Minor": [-1, {f:3,n:3}, {f:5,n:4}, {f:5,n:4}, {f:4,n:2}, {f:3,n:1}],
+            "G Major": [{f:3,n:3}, {f:2,n:2}, 0, 0, 0, {f:3,n:4}],
+            "G Minor": [{f:3,n:1}, {f:5,n:3}, {f:5,n:4}, {f:3,n:1}, {f:3,n:1}, {f:3,n:1}],
+            "E Major": [0, {f:2,n:2}, {f:2,n:3}, {f:1,n:1}, 0, 0],
+            "E Minor": [0, {f:2,n:2}, {f:2,n:3}, 0, 0, 0],
+            "A Major": [-1, 0, {f:2,n:1}, {f:2,n:2}, {f:2,n:3}, 0],
+            "A Minor": [-1, 0, {f:2,n:2}, {f:2,n:3}, {f:1,n:1}, 0],
+            "D Major": [-1, -1, 0, {f:2,n:1}, {f:3,n:3}, {f:2,n:2}],
+            "D Minor": [-1, -1, 0, {f:2,n:2}, {f:3,n:3}, {f:1,n:1}],
+            "Barre Major": [{f:1,n:1}, {f:3,n:3}, {f:3,n:4}, {f:2,n:2}, {f:1,n:1}, {f:1,n:1}]
         };
 
         const tuningSel = document.getElementById('tuningSelect');
         const rootSel = document.getElementById('rootSelect');
         const typeSel = document.getElementById('typeSelect');
-        const capoSel = document.getElementById('capoSelect');
-        const fretboard = document.getElementById('fretboard');
         const chordBox = document.getElementById('chordBox');
+        const fretboard = document.getElementById('fretboard');
 
         function init() {
             NOTES.forEach(n => rootSel.add(new Option(n, n)));
-            for(let i=1; i<=12; i++) capoSel.add(new Option(`Capo Fret ${i}`, i));
             rootSel.value = "C";
-            [tuningSel, rootSel, typeSel, capoSel].forEach(el => el.onchange = render);
+            [tuningSel, rootSel, typeSel].forEach(el => el.onchange = render);
             render();
         }
 
@@ -166,19 +159,17 @@
             const tuning = tuningSel.value.split(',').reverse();
             const root = rootSel.value;
             const type = typeSel.value;
-            const capo = parseInt(capoSel.value);
-            const targetNotes = CHORD_FORMULAS[type].map(i => NOTES[(NOTES.indexOf(root) + i) % 12]);
+            const isStandard = tuningSel.value.startsWith("E2,A2");
             
             document.getElementById('chordName').innerText = `${root} ${type}`;
-            document.getElementById('stringLabels').innerText = tuning.map(n => n.replace(/[0-9]/g, '')).reverse().join(' ');
-
-            drawFretboard(tuning, root, targetNotes, capo);
-            drawChordBox(tuning, root, targetNotes, capo);
+            
+            drawFretboard(tuning, root, type);
+            drawChordBox(root, type, isStandard, tuning);
         }
 
-        function drawChordBox(tuning, root, targets, capo) {
+        function drawChordBox(root, type, isStandard, tuning) {
             chordBox.innerHTML = '';
-            // Basic Box Grid
+            // Draw Grid
             for(let i=0; i<6; i++) {
                 let x = 15 + i*14;
                 let s = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -193,70 +184,67 @@
                 chordBox.appendChild(f);
             }
 
-            // Calculation: Find best fingering (Lowest available fret per string within a 4-fret reach)
-            tuning.slice(0, 6).forEach((sNote, sIdx) => {
-                let x = 15 + sIdx*14;
-                let baseIdx = NOTES.indexOf(sNote.replace(/[0-9]/g, '')) + capo;
-                let found = false;
+            // Logic: Pick a shape
+            let shape = SHAPES[`${root} ${type}`] || SHAPES["Barre Major"];
+            
+            // Special Logic: If Open G tuning and Major Chord, show the Barre at 0
+            if (tuningSel.value.includes("D2,G2,D3,G3") && type === "Major") {
+                shape = [0,0,0,0,0,0];
+            }
 
-                // Check 5 frets relative to the Capo
-                for(let f=0; f<=5; f++) {
-                    if(found) break;
-                    let note = NOTES[(baseIdx + f) % 12];
-                    if(targets.includes(note)) {
-                        if(f === 0) {
-                            let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                            c.setAttribute("cx", x); c.setAttribute("cy", 12); c.setAttribute("r", 3.5);
-                            c.setAttribute("fill", "none"); c.setAttribute("stroke", "#000");
-                            chordBox.appendChild(c);
-                        } else {
-                            let dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                            dot.setAttribute("cx", x); dot.setAttribute("cy", 20 + f*16 - 8);
-                            dot.setAttribute("r", 6); dot.setAttribute("fill", note===root ? "var(--accent)" : "#000");
-                            chordBox.appendChild(dot);
-                        }
-                        found = true;
-                    }
-                }
-                if(!found) {
+            shape.forEach((pos, sIdx) => {
+                let x = 15 + sIdx*14;
+                if(pos === -1) {
                     let t = document.createElementNS("http://www.w3.org/2000/svg", "text");
                     t.setAttribute("x", x); t.setAttribute("y", 15); t.setAttribute("class", "mute-text");
                     t.textContent = "×"; chordBox.appendChild(t);
+                } else if (pos === 0) {
+                    let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    c.setAttribute("cx", x); c.setAttribute("cy", 12); c.setAttribute("r", 3.5);
+                    c.setAttribute("fill", "none"); c.setAttribute("stroke", "#000");
+                    chordBox.appendChild(c);
+                } else {
+                    let dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    dot.setAttribute("cx", x); dot.setAttribute("cy", 20 + pos.f*16 - 8);
+                    dot.setAttribute("r", 6); dot.setAttribute("fill", "#000");
+                    chordBox.appendChild(dot);
+                    let fT = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    fT.setAttribute("x", x); fT.setAttribute("y", 20 + pos.f*16 - 5);
+                    fT.setAttribute("class", "finger-text"); fT.textContent = pos.n;
+                    chordBox.appendChild(fT);
                 }
             });
         }
 
-        function drawFretboard(tuning, root, targets, capo) {
+        function drawFretboard(tuning, root, type) {
             fretboard.innerHTML = '';
-            const height = tuning.length * 25 + 40;
+            const intervals = (type === "Minor") ? [0, 3, 7] : [0, 4, 7];
+            const targets = intervals.map(i => NOTES[(NOTES.indexOf(root) + i) % 12]);
+            const height = tuning.length * 24 + 40;
             fretboard.setAttribute("viewBox", `0 0 1000 ${height}`);
 
             for(let f=0; f<=15; f++) {
                 let x = f*60 + 60;
                 let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 l.setAttribute("x1", x); l.setAttribute("y1", 20); l.setAttribute("x2", x); l.setAttribute("y2", height-20);
-                l.setAttribute("stroke", f===capo?"#fff":"var(--fret)"); l.setAttribute("stroke-width", f===capo?5:1);
-                fretboard.appendChild(l);
+                l.setAttribute("stroke", f===0?"#fff":"#333"); fretboard.appendChild(l);
             }
 
             tuning.forEach((sNote, sIdx) => {
-                let y = sIdx * 25 + 30;
+                let y = sIdx * 24 + 30;
                 let sLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
                 sLine.setAttribute("x1", 60); sLine.setAttribute("y1", y); sLine.setAttribute("x2", 960); sLine.setAttribute("y2", y);
-                sLine.setAttribute("stroke", "var(--string)"); fretboard.appendChild(sLine);
-
+                sLine.setAttribute("stroke", "#444"); fretboard.appendChild(sLine);
                 let startIdx = NOTES.indexOf(sNote.replace(/[0-9]/g, ''));
                 for(let f=0; f<=15; f++) {
-                    if (f < capo) continue;
                     let note = NOTES[(startIdx + f) % 12];
                     if(targets.includes(note)) {
                         let isRoot = note === root;
-                        let x = f*60 + (f===capo ? 35 : 30);
+                        let x = f*60 + (f===0 ? 35 : 30);
                         let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                         c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 10);
                         c.setAttribute("fill", isRoot ? "var(--accent)" : "#18181b");
                         c.setAttribute("stroke", "var(--accent)"); fretboard.appendChild(c);
-
                         let t = document.createElementNS("http://www.w3.org/2000/svg", "text");
                         t.setAttribute("x", x); t.setAttribute("y", y+4);
                         t.setAttribute("fill", isRoot ? "#000" : "var(--accent)");
