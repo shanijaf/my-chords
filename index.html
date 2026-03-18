@@ -3,252 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StringTheory | Chords & Scales</title>
+    <title>StringTheory Pro | Fretboard & Chord Boxes</title>
     <style>
         :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --accent: #ffcc00;
-            --text: #e0e0e0;
-            --fret: #555;
-            --string: #888;
+            --bg: #0f0f12;
+            --card: #18181c;
+            --accent: #00f2ff;
+            --secondary: #7000ff;
+            --text: #ffffff;
+            --fret: #333338;
+            --string: #4a4a4e;
         }
 
         body {
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 2rem;
+            padding: 1rem;
             margin: 0;
         }
 
-        .controls {
+        .main-layout {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 30px;
-            border: 1px solid #333;
-            align-items: flex-end;
+            gap: 20px;
+            width: 95%;
+            max-width: 1200px;
             justify-content: center;
         }
 
-        .control-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 10px; color: var(--string); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
-
-        select, button {
-            background: #2a2a2a;
-            color: white;
-            border: 1px solid #444;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            outline: none;
+        /* Dashboard & Controls */
+        .dashboard {
+            flex: 1;
+            min-width: 300px;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid #25252a;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
 
-        button { background: var(--accent); color: #000; font-weight: bold; border: none; }
-        button:hover { background: #e6b800; }
-        
-        .mode-toggle { background: #444; color: #fff; }
-        .mode-active { background: #666; border-color: var(--accent); }
+        /* Chord Box (The Music Sheet Box) */
+        .chord-box-container {
+            background: #fff; /* Traditional White background for the box */
+            padding: 20px;
+            border-radius: 12px;
+            width: 180px;
+            height: 240px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .chord-name-display { color: #000; font-weight: 800; margin-bottom: 5px; font-size: 1.2rem; }
+
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: 800; }
+
+        select, button {
+            background: #222226;
+            color: white;
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
 
         .fretboard-container {
             width: 100%;
-            max-width: 1100px;
+            margin-top: 30px;
+            background: #111114;
+            padding: 40px 20px;
+            border-radius: 20px;
+            border: 1px solid #222;
             overflow-x: auto;
-            background: #1a1a1a;
-            padding: 50px 20px;
-            border-radius: 12px;
-            border: 1px solid #333;
         }
 
-        svg { width: 100%; height: auto; min-width: 900px; }
-        .note-text { font-family: sans-serif; pointer-events: none; }
-        
-        h1 { margin: 0 0 20px 0; font-weight: 300; letter-spacing: 4px; font-size: 1.5rem; }
-        span.gold { color: var(--accent); font-weight: 800; }
+        svg#fretboard { min-width: 900px; }
+        .note-text { font-size: 10px; font-weight: 900; text-anchor: middle; }
     </style>
 </head>
 <body>
 
-    <h1>STRING<span class="gold">THEORY</span></h1>
+    <h1 style="letter-spacing: 4px;">STRING<span style="color:var(--accent)">THEORY</span></h1>
 
-    <div class="controls">
-        <div class="control-group">
-            <label>View Mode</label>
-            <select id="modeSelect">
-                <option value="chords">Chord Mode</option>
-                <option value="scales">Scale Mode</option>
-            </select>
+    <div class="main-layout">
+        <div class="dashboard">
+            <div class="control-group">
+                <label>Root</label>
+                <select id="rootSelect"></select>
+            </div>
+            <div class="control-group">
+                <label>Chord</label>
+                <select id="typeSelect"></select>
+            </div>
+            <div class="control-group">
+                <label>Tuning</label>
+                <select id="tuningSelect">
+                    <option value="E2,A2,D3,G3,B3,E4">Standard</option>
+                    <option value="D2,A2,D3,G3,B3,E4">Drop D</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Capo</label>
+                <select id="capoSelect"><option value="0">None</option></select>
+            </div>
+            <button style="grid-column: span 2; background: var(--accent); color: #000; font-weight: bold;" id="playBtn">LISTEN TO CHORD</button>
         </div>
-        <div class="control-group">
-            <label>Root Note</label>
-            <select id="rootSelect"></select>
+
+        <div class="chord-box-container">
+            <div id="chordName" class="chord-name-display">C Maj</div>
+            <svg id="chordBox" width="140" height="180" viewBox="0 0 100 120"></svg>
         </div>
-        <div class="control-group">
-            <label id="typeLabel">Chord Type</label>
-            <select id="typeSelect"></select>
-        </div>
-        <div class="control-group">
-            <label>Tuning</label>
-            <select id="tuningSelect">
-                <option value="E2,A2,D3,G3,B3,E4">Standard</option>
-                <option value="D2,A2,D3,G3,B3,E4">Drop D</option>
-                <option value="D2,G2,D3,G3,B3,D4">Open G</option>
-                <option value="C2,G2,C3,G3,C4,E4">Open C</option>
-            </select>
-        </div>
-        <div class="control-group">
-            <label>Capo</label>
-            <select id="capoSelect"><option value="0">None</option></select>
-        </div>
-        <button id="saveBtn">Export PNG</button>
     </div>
 
     <div class="fretboard-container">
-        <svg id="fretboard" viewBox="0 0 1000 180" xmlns="http://www.w3.org/2000/svg"></svg>
+        <svg id="fretboard" viewBox="0 0 1000 160" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <script>
         const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-        
-        const DATA = {
-            chords: {
-                "Major": [0, 4, 7], "Minor": [0, 3, 7], "7th": [0, 4, 7, 10],
-                "Major 7": [0, 4, 7, 11], "Minor 7": [0, 3, 7, 10], "Sus4": [0, 5, 7]
-            },
-            scales: {
-                "Major (Ionian)": [0, 2, 4, 5, 7, 9, 11],
-                "Minor (Aeolian)": [0, 2, 3, 5, 7, 8, 10],
-                "Major Pentatonic": [0, 2, 4, 7, 9],
-                "Minor Pentatonic": [0, 3, 5, 7, 10],
-                "Blues Scale": [0, 3, 5, 6, 7, 10],
-                "Dorian": [0, 2, 3, 5, 7, 9, 10]
-            }
+        const CHORDS = {
+            "Major": { intervals: [0, 4, 7], shape: [0, 3, 2, 0, 1, 0] }, // Standard C-shape relative
+            "Minor": { intervals: [0, 3, 7], shape: [0, 2, 2, 0, 0, 0] },
+            "7th": { intervals: [0, 4, 7, 10], shape: [1, 3, 1, 2, 1, 1] },
+            "Major 7": { intervals: [0, 4, 7, 11], shape: [null, 3, 2, 0, 0, 0] }
         };
 
-        const modeSelect = document.getElementById('modeSelect');
         const rootSelect = document.getElementById('rootSelect');
         const typeSelect = document.getElementById('typeSelect');
-        const typeLabel = document.getElementById('typeLabel');
         const tuningSelect = document.getElementById('tuningSelect');
         const capoSelect = document.getElementById('capoSelect');
-        const saveBtn = document.getElementById('saveBtn');
-        const svg = document.getElementById('fretboard');
+        const chordBoxSvg = document.getElementById('chordBox');
+        const fretSvg = document.getElementById('fretboard');
 
         // Init
         NOTES.forEach(n => rootSelect.add(new Option(n, n)));
+        Object.keys(CHORDS).forEach(k => typeSelect.add(new Option(k, k)));
         for(let i=1; i<=12; i++) capoSelect.add(new Option(`Fret ${i}`, i));
-        
-        function updateTypeOptions() {
-            const mode = modeSelect.value;
-            typeLabel.innerText = mode === 'chords' ? 'Chord Type' : 'Scale Type';
-            typeSelect.innerHTML = '';
-            Object.keys(DATA[mode]).forEach(key => typeSelect.add(new Option(key, key)));
-            draw();
+        rootSelect.value = "C";
+
+        function drawChordBox() {
+            chordBoxSvg.innerHTML = '';
+            const root = rootSelect.value;
+            const type = typeSelect.value;
+            document.getElementById('chordName').innerText = `${root} ${type}`;
+
+            // Draw Box Grid (5 frets, 6 strings)
+            for(let i=0; i<6; i++) { // Strings
+                let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", 10 + i*16); line.setAttribute("y1", 20);
+                line.setAttribute("x2", 10 + i*16); line.setAttribute("y2", 100);
+                line.setAttribute("stroke", "#000"); svgElement(chordBoxSvg, line);
+            }
+            for(let i=0; i<6; i++) { // Frets
+                let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", 10); line.setAttribute("y1", 20 + i*16);
+                line.setAttribute("x2", 90); line.setAttribute("y2", 20 + i*16);
+                line.setAttribute("stroke", "#000"); 
+                line.setAttribute("stroke-width", i===0 ? 4 : 1);
+                svgElement(chordBoxSvg, line);
+            }
+
+            // Simple Fingering Logic (Mocked for common shapes)
+            // In a pro tool, this would be a lookup table of shapes
+            const fingers = CHORDS[type].shape;
+            fingers.forEach((fret, sIdx) => {
+                if(fret === null) {
+                    let xText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    xText.setAttribute("x", 10 + sIdx*16); xText.setAttribute("y", 15);
+                    xText.setAttribute("text-anchor", "middle"); xText.setAttribute("font-size", "10");
+                    xText.textContent = "X"; svgElement(chordBoxSvg, xText);
+                } else if (fret === 0) {
+                    let oText = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    oText.setAttribute("cx", 10 + sIdx*16); oText.setAttribute("cy", 12);
+                    oText.setAttribute("r", 3); oText.setAttribute("fill", "none");
+                    oText.setAttribute("stroke", "#000"); svgElement(chordBoxSvg, oText);
+                } else {
+                    let dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    dot.setAttribute("cx", 10 + sIdx*16); dot.setAttribute("cy", 20 + fret*16 - 8);
+                    dot.setAttribute("r", 5); dot.setAttribute("fill", "#000");
+                    svgElement(chordBoxSvg, dot);
+                }
+            });
         }
 
-        function draw() {
-            svg.innerHTML = '';
-            // Export Background
-            let bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            bg.setAttribute("width", "100%"); bg.setAttribute("height", "100%"); bg.setAttribute("fill", "#1a1a1a");
-            svg.appendChild(bg);
-
-            const mode = modeSelect.value;
+        function drawFretboard() {
+            fretSvg.innerHTML = '';
             const tuning = tuningSelect.value.split(',').reverse();
             const root = rootSelect.value;
             const type = typeSelect.value;
             const capo = parseInt(capoSelect.value);
-            const intervals = DATA[mode][type] || [];
-            const targetNotes = intervals.map(i => NOTES[(NOTES.indexOf(root) + i) % 12]);
+            const targetNotes = CHORDS[type].intervals.map(i => NOTES[(NOTES.indexOf(root) + i) % 12]);
             
-            const numFrets = 15; const fretWidth = 60; const margin = 80;
+            // Background
+            let bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            bg.setAttribute("width", "100%"); bg.setAttribute("height", "100%"); bg.setAttribute("fill", "#111114");
+            fretSvg.appendChild(bg);
 
-            // Frets
-            for (let i = 0; i <= numFrets; i++) {
-                let x = i * fretWidth + margin;
-                let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                line.setAttribute("x1", x); line.setAttribute("y1", 20); line.setAttribute("x2", x); line.setAttribute("y2", 160);
-                line.setAttribute("stroke", i === capo ? "#ffffff" : "#555");
-                line.setAttribute("stroke-width", i === capo ? "6" : "2");
-                svg.appendChild(line);
+            for (let f = 0; f <= 15; f++) {
+                let x = f*60 + 60;
+                let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                l.setAttribute("x1", x); l.setAttribute("y1", 20); l.setAttribute("x2", x); l.setAttribute("y2", 140);
+                l.setAttribute("stroke", f === capo ? "#fff" : "#333");
+                l.setAttribute("stroke-width", f === capo ? 5 : 2);
+                fretSvg.appendChild(l);
             }
 
-            // Strings & Notes
-            tuning.forEach((startNoteStr, sIdx) => {
-                let y = sIdx * 28 + 20;
-                let openNoteName = startNoteStr.replace(/[0-9]/g, '');
-                let stringRootIdx = NOTES.indexOf(openNoteName);
-
+            tuning.forEach((sNote, sIdx) => {
+                let y = sIdx * 24 + 20;
                 let sLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                sLine.setAttribute("x1", margin); sLine.setAttribute("y1", y);
-                sLine.setAttribute("x2", (numFrets * fretWidth) + margin); sLine.setAttribute("y2", y);
-                sLine.setAttribute("stroke", "#888"); sLine.setAttribute("stroke-width", 1 + sIdx/1.5);
-                svg.appendChild(sLine);
+                sLine.setAttribute("x1", 60); sLine.setAttribute("y1", y); sLine.setAttribute("x2", 960); sLine.setAttribute("y2", y);
+                sLine.setAttribute("stroke", "#444"); fretSvg.appendChild(sLine);
 
-                // Side Label
-                let tLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                tLabel.setAttribute("x", margin - 20); tLabel.setAttribute("y", y + 4);
-                tLabel.setAttribute("fill", "#888"); tLabel.setAttribute("font-size", "11px"); tLabel.setAttribute("text-anchor", "end");
-                tLabel.textContent = NOTES[(stringRootIdx + capo) % 12];
-                svg.appendChild(tLabel);
-
-                for (let f = 0; f <= numFrets; f++) {
+                let startIdx = NOTES.indexOf(sNote.replace(/[0-9]/g, ''));
+                for (let f = 0; f <= 15; f++) {
                     if (f < capo) continue;
-                    let noteAtFret = NOTES[(stringRootIdx + f) % 12];
-                    if (targetNotes.includes(noteAtFret)) {
-                        let isRoot = noteAtFret === root;
-                        let x = f * fretWidth + (f === capo ? margin - 25 : margin - (fretWidth/2));
-                        
-                        let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                        circle.setAttribute("cx", x); circle.setAttribute("cy", y);
-                        circle.setAttribute("r", f === capo ? 9 : 12);
-                        circle.setAttribute("fill", isRoot && f !== capo ? "#1a1a1a" : "#ffcc00");
-                        if(isRoot && f !== capo) { circle.setAttribute("stroke", "#ffcc00"); circle.setAttribute("stroke-width", "2"); }
-                        if(f === capo) { circle.setAttribute("fill", "none"); circle.setAttribute("stroke", "#ffcc00"); circle.setAttribute("stroke-width", "2"); }
-                        svg.appendChild(circle);
+                    let note = NOTES[(startIdx + f) % 12];
+                    if (targetNotes.includes(note)) {
+                        let isRoot = note === root;
+                        let x = f*60 + (f===capo ? 35 : 30);
+                        let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 10);
+                        c.setAttribute("fill", isRoot ? "var(--accent)" : "#222");
+                        c.setAttribute("stroke", "var(--accent)"); fretSvg.appendChild(c);
 
-                        let txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                        txt.setAttribute("x", x); txt.setAttribute("y", y + 4);
-                        txt.setAttribute("fill", isRoot && f !== capo ? "#ffcc00" : "#000");
-                        if (f === capo) txt.setAttribute("fill", "white");
-                        txt.setAttribute("font-size", "10px"); txt.setAttribute("font-weight", "bold"); txt.setAttribute("text-anchor", "middle");
-                        txt.textContent = noteAtFret;
-                        svg.appendChild(txt);
+                        let t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        t.setAttribute("x", x); t.setAttribute("y", y+4);
+                        t.setAttribute("fill", isRoot ? "#000" : "var(--accent)");
+                        t.setAttribute("class", "note-text"); t.textContent = note;
+                        fretSvg.appendChild(t);
                     }
                 }
             });
         }
 
-        saveBtn.onclick = () => {
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            const img = new Image();
-            const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
-            const url = URL.createObjectURL(svgBlob);
-            img.onload = () => {
-                canvas.width = 2000; canvas.height = 360;
-                ctx.drawImage(img, 0, 0, 2000, 360);
-                const png = canvas.toDataURL("image/png");
-                const downloadLink = document.createElement("a");
-                downloadLink.href = png;
-                downloadLink.download = `${rootSelect.value}_${typeSelect.value}.png`;
-                downloadLink.click();
-            };
-            img.src = url;
-        };
+        function svgElement(parent, child) { parent.appendChild(child); }
+        function updateAll() { drawChordBox(); drawFretboard(); }
 
-        modeSelect.onchange = updateTypeOptions;
-        [rootSelect, typeSelect, tuningSelect, capoSelect].forEach(el => el.onchange = draw);
-        updateTypeOptions();
+        [rootSelect, typeSelect, tuningSelect, capoSelect].forEach(el => el.onchange = updateAll);
+        updateAll();
     </script>
 </body>
 </html>
