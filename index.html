@@ -3,51 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chord Flashcard Maker</title>
+    <title>Pro Chord Studio</title>
     <style>
-        :root { --primary: #6200ee; --bg: #f8f9fa; --wood: #3e2723; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 20px; text-align: center; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .fretboard { display: flex; justify-content: center; background: var(--wood); padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .string { width: 30px; height: 180px; border-left: 2px solid #ddd; position: relative; cursor: pointer; }
-        .string:last-child { border-right: 2px solid #ddd; }
-        .fret-marker { width: 20px; height: 20px; background: #ffeb3b; border-radius: 50%; position: absolute; left: 5px; transform: translateY(-50%); }
-        .mute-x { color: white; position: absolute; top: -25px; left: 8px; font-weight: bold; }
-        .controls { display: grid; gap: 10px; }
-        button { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: var(--primary); color: white; }
-        .hidden { display: none; }
+        :root { --fret-color: #444; --string-color: #888; --nut-color: #000; --finger: #222; }
+        body { font-family: -apple-system, sans-serif; background: #f0f0f0; display: flex; justify-content: center; padding: 20px; }
+        .app-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        
+        /* Tuning Header */
+        .tuning-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .tuning-peg { width: 30px; font-weight: bold; text-align: center; border: 1px solid #ddd; border-radius: 4px; padding: 5px 0; font-size: 14px; }
+
+        /* The Diagram - Vertical Strings */
+        .diagram-container { position: relative; width: 220px; height: 250px; margin: 30px auto; border-top: 8px solid var(--nut-color); }
+        .fret-line { position: absolute; width: 100%; height: 2px; background: var(--fret-color); left: 0; }
+        .string-line { position: absolute; height: 100%; width: 2px; background: var(--string-color); top: 0; }
+        
+        /* Touch Targets for placing fingers */
+        .touch-grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(5, 1fr); z-index: 10; }
+        .cell { cursor: pointer; position: relative; }
+        .dot { width: 22px; height: 22px; background: var(--finger); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+        .mute-label { position: absolute; top: -35px; width: 100%; text-align: center; font-weight: bold; font-size: 18px; cursor: pointer; }
+
+        .ui-group { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        input, select { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
+        button { padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #007bff; color: white; }
+        .secondary { background: #6c757d; }
     </style>
 </head>
 <body>
-<div class="container">
-    <div id="editor">
-        <h2>🎸 Chord Maker</h2>
-        <input type="text" id="chordName" placeholder="Chord Name" style="width:90%; padding:10px; margin-bottom:10px;">
-        <div class="fretboard" id="editorBoard">
-            <div class="string" onclick="setFret(0, event)"></div><div class="string" onclick="setFret(1, event)"></div><div class="string" onclick="setFret(2, event)"></div><div class="string" onclick="setFret(3, event)"></div><div class="string" onclick="setFret(4, event)"></div><div class="string" onclick="setFret(5, event)"></div>
+
+<div class="app-card">
+    <div class="tuning-row" id="tuningDisplay">
         </div>
-        <button onclick="saveChord()">Save Chord</button>
-        <button style="background:#03dac6; color:black; margin-top:10px;" onclick="toggleMode()">Play Flashcards</button>
+
+    <div class="diagram-container" id="fretboard">
+        <div class="touch-grid" id="touchGrid"></div>
     </div>
-    <div id="quiz" class="hidden">
-        <h2 id="qName">?</h2>
-        <div id="answer" class="hidden"><div class="fretboard" id="quizBoard"></div></div>
-        <button onclick="document.getElementById('answer').classList.toggle('hidden')">Show/Hide Answer</button>
-        <button style="background:#03dac6; color:black;" onclick="nextQ()">Next Chord</button>
-        <button style="background:#cf6679;" onclick="toggleMode()">Back to Editor</button>
+
+    <div class="ui-group">
+        <select id="tuningPreset" onchange="applyPreset()">
+            <option value="E,A,D,G,B,E">Standard (E A D G B E)</option>
+            <option value="D,A,D,G,B,E">Drop D</option>
+            <option value="D,A,D,G,A,D">DADGAD</option>
+            <option value="Eb,Ab,Db,Gb,Bb,Eb">Half Step Down</option>
+        </select>
+        <input type="text" id="chordName" placeholder="Chord Name (e.g. G13)">
+        <button onclick="saveChord()">💾 Save to Flashcards</button>
+        <button class="secondary" onclick="toggleQuiz()">🎴 Start Flashcards</button>
     </div>
 </div>
+
 <script>
-    let shape = [0,0,0,0,0,0]; let lib = JSON.parse(localStorage.getItem('chords')) || [];
-    function setFret(s, e) { let f = Math.ceil((e.clientY - e.target.getBoundingClientRect().top) / 35); shape[s] = (shape[s] === f) ? 0 : f; draw(shape, 'editorBoard'); }
-    function draw(sh, id) { 
-        const b = document.getElementById(id); b.querySelectorAll('.string').forEach((s, i) => {
-            s.innerHTML = sh[i] > 0 ? `<div class="fret-marker" style="top:${sh[i]*35}px"></div>` : '';
+    let currentShape = [0, 0, 0, 0, 0, 0]; // 0=open, -1=mute, 1-5=fret
+    let currentTuning = ["E", "A", "D", "G", "B", "E"];
+    let library = JSON.parse(localStorage.getItem('my_chords')) || [];
+
+    function initBoard() {
+        const board = document.getElementById('fretboard');
+        const grid = document.getElementById('touchGrid');
+        const pegs = document.getElementById('tuningDisplay');
+        
+        // Create 5 Frets
+        for(let i=1; i<=5; i++) {
+            let f = document.createElement('div');
+            f.className = 'fret-line';
+            f.style.top = (i * 20) + '%';
+            board.appendChild(f);
+        }
+
+        // Create 6 Strings and Touch Cells
+        for(let s=0; s<6; s++) {
+            let str = document.createElement('div');
+            str.className = 'string-line';
+            str.style.left = (s * 20) + '%';
+            board.appendChild(str);
+
+            for(let r=0; r<5; r++) {
+                let cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.onclick = () => setFret(s, r+1);
+                grid.appendChild(cell);
+            }
+        }
+        render();
+    }
+
+    function setFret(s, f) {
+        currentShape[s] = (currentShape[s] === f) ? 0 : f;
+        render();
+    }
+
+    function toggleMute(s) {
+        currentShape[s] = (currentShape[s] === -1) ? 0 : -1;
+        render();
+    }
+
+    function applyPreset() {
+        currentTuning = document.getElementById('tuningPreset').value.split(',');
+        render();
+    }
+
+    function render() {
+        // Render Tuning Pegs
+        const pegs = document.getElementById('tuningDisplay');
+        pegs.innerHTML = currentTuning.map((note, i) => `
+            <div style="display:flex; flex-direction:column">
+                <div class="mute-label" onclick="toggleMute(${i})">${currentShape[i] === -1 ? '×' : (currentShape[i] === 0 ? '○' : '')}</div>
+                <div class="tuning-peg">${note}</div>
+            </div>
+        `).join('');
+
+        // Render Fingers
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((cell, index) => {
+            const s = index % 6;
+            const f = Math.floor(index / 6) + 1;
+            cell.innerHTML = (currentShape[s] === f) ? `<div class="dot"></div>` : '';
         });
     }
-    function saveChord() { let n = document.getElementById('chordName').value; if(!n) return; lib.push({n, sh:[...shape]}); localStorage.setItem('chords', JSON.stringify(lib)); alert('Saved!'); }
-    function toggleMode() { document.getElementById('editor').classList.toggle('hidden'); document.getElementById('quiz').classList.toggle('hidden'); if(lib.length) nextQ(); }
-    function nextQ() { let c = lib[Math.floor(Math.random()*lib.length)]; document.getElementById('qName').innerText = c.n; draw(c.sh, 'quizBoard'); document.getElementById('answer').classList.add('hidden'); }
+
+    function saveChord() {
+        const name = document.getElementById('chordName').value;
+        if(!name) return alert("Name the chord!");
+        library.push({ name, shape: [...currentShape], tuning: [...currentTuning] });
+        localStorage.setItem('my_chords', JSON.stringify(library));
+        alert("Saved!");
+        currentShape = [0,0,0,0,0,0];
+        render();
+    }
+
+    function toggleQuiz() {
+        if(library.length === 0) return alert("Save chords first!");
+        // Simplified: Pick random and alert for now, can be expanded to full UI
+        const c = library[Math.floor(Math.random()*library.length)];
+        alert("Visualize this chord: " + c.name + "\nTuning: " + c.tuning.join(" "));
+        currentShape = c.shape;
+        currentTuning = c.tuning;
+        render();
+    }
+
+    initBoard();
 </script>
 </body>
 </html>
