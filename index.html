@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StringTheory | Pro Chord Lab</title>
+    <title>StringTheory | Chords & Scales</title>
     <style>
         :root {
             --bg: #121212;
@@ -36,6 +36,7 @@
             margin-bottom: 30px;
             border: 1px solid #333;
             align-items: flex-end;
+            justify-content: center;
         }
 
         .control-group { display: flex; flex-direction: column; gap: 5px; }
@@ -49,18 +50,13 @@
             border-radius: 6px;
             cursor: pointer;
             outline: none;
-            transition: 0.2s;
         }
 
-        button {
-            background: var(--accent);
-            color: #000;
-            font-weight: bold;
-            border: none;
-        }
-
-        button:hover { background: #e6b800; transform: translateY(-1px); }
-        select:focus { border-color: var(--accent); }
+        button { background: var(--accent); color: #000; font-weight: bold; border: none; }
+        button:hover { background: #e6b800; }
+        
+        .mode-toggle { background: #444; color: #fff; }
+        .mode-active { background: #666; border-color: var(--accent); }
 
         .fretboard-container {
             width: 100%;
@@ -73,14 +69,7 @@
         }
 
         svg { width: 100%; height: auto; min-width: 900px; }
-        .fret-line { stroke: var(--fret); stroke-width: 2; }
-        .nut-line { stroke: #fff; stroke-width: 6; }
-        .string-line { stroke: var(--string); }
-        .note-marker { fill: var(--accent); }
-        .root-marker { fill: #1a1a1a; stroke: var(--accent); stroke-width: 3; }
-        .note-text { fill: #000; font-size: 10px; font-weight: 800; text-anchor: middle; }
-        .root-text { fill: var(--accent); }
-        .string-label { fill: var(--string); font-size: 11px; text-anchor: end; font-weight: bold; }
+        .note-text { font-family: sans-serif; pointer-events: none; }
         
         h1 { margin: 0 0 20px 0; font-weight: 300; letter-spacing: 4px; font-size: 1.5rem; }
         span.gold { color: var(--accent); font-weight: 800; }
@@ -92,17 +81,24 @@
 
     <div class="controls">
         <div class="control-group">
+            <label>View Mode</label>
+            <select id="modeSelect">
+                <option value="chords">Chord Mode</option>
+                <option value="scales">Scale Mode</option>
+            </select>
+        </div>
+        <div class="control-group">
             <label>Root Note</label>
             <select id="rootSelect"></select>
         </div>
         <div class="control-group">
-            <label>Chord Type</label>
+            <label id="typeLabel">Chord Type</label>
             <select id="typeSelect"></select>
         </div>
         <div class="control-group">
             <label>Tuning</label>
             <select id="tuningSelect">
-                <option value="E2,A2,D3,G3,B3,E4">Standard (EADGBE)</option>
+                <option value="E2,A2,D3,G3,B3,E4">Standard</option>
                 <option value="D2,A2,D3,G3,B3,E4">Drop D</option>
                 <option value="D2,G2,D3,G3,B3,D4">Open G</option>
                 <option value="C2,G2,C3,G3,C4,E4">Open C</option>
@@ -115,45 +111,67 @@
         <button id="saveBtn">Export PNG</button>
     </div>
 
-    <div class="fretboard-container" id="captureArea">
+    <div class="fretboard-container">
         <svg id="fretboard" viewBox="0 0 1000 180" xmlns="http://www.w3.org/2000/svg"></svg>
     </div>
 
     <script>
         const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-        const CHORD_DEFS = {
-            "Major": [0, 4, 7], "Minor": [0, 3, 7], "7th": [0, 4, 7, 10],
-            "Major 7": [0, 4, 7, 11], "Minor 7": [0, 3, 7, 10], "Sus4": [0, 5, 7],
-            "Dim": [0, 3, 6], "9th": [0, 4, 7, 10, 14]
+        
+        const DATA = {
+            chords: {
+                "Major": [0, 4, 7], "Minor": [0, 3, 7], "7th": [0, 4, 7, 10],
+                "Major 7": [0, 4, 7, 11], "Minor 7": [0, 3, 7, 10], "Sus4": [0, 5, 7]
+            },
+            scales: {
+                "Major (Ionian)": [0, 2, 4, 5, 7, 9, 11],
+                "Minor (Aeolian)": [0, 2, 3, 5, 7, 8, 10],
+                "Major Pentatonic": [0, 2, 4, 7, 9],
+                "Minor Pentatonic": [0, 3, 5, 7, 10],
+                "Blues Scale": [0, 3, 5, 6, 7, 10],
+                "Dorian": [0, 2, 3, 5, 7, 9, 10]
+            }
         };
 
+        const modeSelect = document.getElementById('modeSelect');
         const rootSelect = document.getElementById('rootSelect');
         const typeSelect = document.getElementById('typeSelect');
+        const typeLabel = document.getElementById('typeLabel');
         const tuningSelect = document.getElementById('tuningSelect');
         const capoSelect = document.getElementById('capoSelect');
         const saveBtn = document.getElementById('saveBtn');
         const svg = document.getElementById('fretboard');
 
+        // Init
         NOTES.forEach(n => rootSelect.add(new Option(n, n)));
-        Object.keys(CHORD_DEFS).forEach(c => typeSelect.add(new Option(c, c)));
         for(let i=1; i<=12; i++) capoSelect.add(new Option(`Fret ${i}`, i));
         
-        rootSelect.value = "C";
+        function updateTypeOptions() {
+            const mode = modeSelect.value;
+            typeLabel.innerText = mode === 'chords' ? 'Chord Type' : 'Scale Type';
+            typeSelect.innerHTML = '';
+            Object.keys(DATA[mode]).forEach(key => typeSelect.add(new Option(key, key)));
+            draw();
+        }
 
         function draw() {
             svg.innerHTML = '';
-            // Background for the export
+            // Export Background
             let bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
             bg.setAttribute("width", "100%"); bg.setAttribute("height", "100%"); bg.setAttribute("fill", "#1a1a1a");
             svg.appendChild(bg);
 
+            const mode = modeSelect.value;
             const tuning = tuningSelect.value.split(',').reverse();
             const root = rootSelect.value;
             const type = typeSelect.value;
             const capo = parseInt(capoSelect.value);
-            const targetNotes = CHORD_DEFS[type].map(i => NOTES[(NOTES.indexOf(root) + i) % 12]);
+            const intervals = DATA[mode][type] || [];
+            const targetNotes = intervals.map(i => NOTES[(NOTES.indexOf(root) + i) % 12]);
+            
             const numFrets = 15; const fretWidth = 60; const margin = 80;
 
+            // Frets
             for (let i = 0; i <= numFrets; i++) {
                 let x = i * fretWidth + margin;
                 let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -163,6 +181,7 @@
                 svg.appendChild(line);
             }
 
+            // Strings & Notes
             tuning.forEach((startNoteStr, sIdx) => {
                 let y = sIdx * 28 + 20;
                 let openNoteName = startNoteStr.replace(/[0-9]/g, '');
@@ -174,6 +193,7 @@
                 sLine.setAttribute("stroke", "#888"); sLine.setAttribute("stroke-width", 1 + sIdx/1.5);
                 svg.appendChild(sLine);
 
+                // Side Label
                 let tLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
                 tLabel.setAttribute("x", margin - 20); tLabel.setAttribute("y", y + 4);
                 tLabel.setAttribute("fill", "#888"); tLabel.setAttribute("font-size", "11px"); tLabel.setAttribute("text-anchor", "end");
@@ -191,7 +211,7 @@
                         circle.setAttribute("cx", x); circle.setAttribute("cy", y);
                         circle.setAttribute("r", f === capo ? 9 : 12);
                         circle.setAttribute("fill", isRoot && f !== capo ? "#1a1a1a" : "#ffcc00");
-                        if(isRoot && f !== capo) { circle.setAttribute("stroke", "#ffcc00"); circle.setAttribute("stroke-width", "3"); }
+                        if(isRoot && f !== capo) { circle.setAttribute("stroke", "#ffcc00"); circle.setAttribute("stroke-width", "2"); }
                         if(f === capo) { circle.setAttribute("fill", "none"); circle.setAttribute("stroke", "#ffcc00"); circle.setAttribute("stroke-width", "2"); }
                         svg.appendChild(circle);
 
@@ -214,25 +234,21 @@
             const img = new Image();
             const svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
             const url = URL.createObjectURL(svgBlob);
-
             img.onload = () => {
-                canvas.width = 2000; // High res
-                canvas.height = 360;
+                canvas.width = 2000; canvas.height = 360;
                 ctx.drawImage(img, 0, 0, 2000, 360);
                 const png = canvas.toDataURL("image/png");
                 const downloadLink = document.createElement("a");
                 downloadLink.href = png;
-                downloadLink.download = `${rootSelect.value}_${typeSelect.value}_Capo${capoSelect.value}.png`;
-                document.body.appendChild(downloadLink);
+                downloadLink.download = `${rootSelect.value}_${typeSelect.value}.png`;
                 downloadLink.click();
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(url);
             };
             img.src = url;
         };
 
+        modeSelect.onchange = updateTypeOptions;
         [rootSelect, typeSelect, tuningSelect, capoSelect].forEach(el => el.onchange = draw);
-        draw();
+        updateTypeOptions();
     </script>
 </body>
 </html>
