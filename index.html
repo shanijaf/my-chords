@@ -1,24 +1,187 @@
-// 1. Define the Musical Universe
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StringTheory | Dynamic Chord Library</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --accent: #ffcc00;
+            --text: #e0e0e0;
+            --fret: #555;
+            --string: #888;
+        }
 
-// 2. Define Chord Formulas (Intervals)
-const CHORD_FORMULAS = {
-    "Major": [0, 4, 7],     // Root, Major 3rd, 5th
-    "Minor": [0, 3, 7],     // Root, Minor 3rd, 5th
-    "7th":   [0, 4, 7, 10], // Root, Major 3rd, 5th, Minor 7th
-};
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            margin: 0;
+        }
 
-// 3. Logic to get notes for a specific chord
-function getChordNotes(root, type) {
-    const rootIdx = NOTES.indexOf(root);
-    return CHORD_FORMULAS[type].map(interval => NOTES[(rootIdx + interval) % 12]);
-}
+        .controls {
+            display: flex;
+            gap: 20px;
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
 
-// 4. Update Fretboard Logic
-function refreshVisuals() {
-    const tuning = ["E", "B", "G", "D", "A", "E"]; // High to Low
-    const targetChordNotes = getChordNotes("C", "Major"); // Returns ["C", "E", "G"]
-    
-    // The UI would then loop through strings and highlight ANY note 
-    // that exists in the targetChordNotes array.
-}
+        select {
+            background: #333;
+            color: white;
+            border: 1px solid #444;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .fretboard-container {
+            width: 100%;
+            max-width: 1000px;
+            overflow-x: auto;
+            background: #1a1a1a;
+            padding: 40px 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        svg { width: 100%; height: auto; min-width: 800px; }
+
+        .fret-line { stroke: var(--fret); stroke-width: 3; }
+        .string-line { stroke: var(--string); }
+        .note-marker { fill: var(--accent); cursor: pointer; transition: 0.2s; }
+        .note-text { fill: #000; font-size: 10px; font-weight: bold; pointer-events: none; text-anchor: middle; }
+        .open-note { fill: var(--text); font-size: 12px; text-anchor: middle; }
+        
+        h1 { margin-top: 0; font-weight: 300; letter-spacing: 2px; }
+        span.gold { color: var(--accent); font-weight: 800; }
+    </style>
+</head>
+<body>
+
+    <h1>STRING<span class="gold">THEORY</span></h1>
+
+    <div class="controls">
+        <div>
+            <label>Root: </label>
+            <select id="rootSelect"></select>
+        </div>
+        <div>
+            <label>Chord: </label>
+            <select id="typeSelect"></select>
+        </div>
+        <div>
+            <label>Tuning: </label>
+            <select id="tuningSelect">
+                <option value="E2,A2,D3,G3,B3,E4">Standard (EADGBE)</option>
+                <option value="D2,A2,D3,G3,B3,E4">Drop D</option>
+                <option value="D2,G2,D3,G3,B3,D4">Open G</option>
+                <option value="C2,G2,C3,G3,A3,E4">C6 (Lap Steel)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="fretboard-container">
+        <svg id="fretboard" viewBox="0 0 850 160"></svg>
+    </div>
+
+    <script>
+        const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const CHORDS = {
+            "Major": [0, 4, 7],
+            "Minor": [0, 3, 7],
+            "7th": [0, 4, 7, 10],
+            "Major 7": [0, 4, 7, 11],
+            "Minor 7": [0, 3, 7, 10],
+            "Sus4": [0, 5, 7]
+        };
+
+        const rootSelect = document.getElementById('rootSelect');
+        const typeSelect = document.getElementById('typeSelect');
+        const tuningSelect = document.getElementById('tuningSelect');
+        const svg = document.getElementById('fretboard');
+
+        // Init Dropdowns
+        NOTES.forEach(n => rootSelect.add(new Option(n, n)));
+        Object.keys(CHORDS).forEach(c => typeSelect.add(new Option(c, c)));
+        rootSelect.value = "C";
+
+        function draw() {
+            svg.innerHTML = '';
+            const tuning = tuningSelect.value.split(',').reverse();
+            const root = rootSelect.value;
+            const type = typeSelect.value;
+            const targetNotes = CHORDS[type].map(i => NOTES[(NOTES.indexOf(root) + i) % 12]);
+
+            const numFrets = 13;
+            const numStrings = tuning.length;
+
+            // Draw Frets
+            for (let i = 0; i <= numFrets; i++) {
+                let x = i * 65 + 40;
+                let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", x); line.setAttribute("y1", 20);
+                line.setAttribute("x2", x); line.setAttribute("y2", 140);
+                line.setAttribute("class", "fret-line");
+                svg.appendChild(line);
+            }
+
+            // Draw Strings & Notes
+            tuning.forEach((startNote, sIdx) => {
+                let y = sIdx * 24 + 20;
+                
+                // String Line
+                let sLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                sLine.setAttribute("x1", 40); sLine.setAttribute("y1", y);
+                sLine.setAttribute("x2", 820); sLine.setAttribute("y2", y);
+                sLine.setAttribute("class", "string-line");
+                sLine.setAttribute("style", `stroke-width: ${1 + sIdx/2}`); // Thicker bass strings
+                svg.appendChild(sLine);
+
+                let startIdx = NOTES.indexOf(startNote.replace(/[0-9]/g, ''));
+
+                for (let f = 0; f <= numFrets; f++) {
+                    let currentNote = NOTES[(startIdx + f) % 12];
+                    let x = f * 65 + (f === 0 ? 20 : 7.5);
+
+                    if (targetNotes.includes(currentNote)) {
+                        if (f === 0) {
+                            // Open string indicator
+                            let txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                            txt.setAttribute("x", x); txt.setAttribute("y", y + 5);
+                            txt.setAttribute("class", "open-note");
+                            txt.textContent = currentNote;
+                            svg.appendChild(txt);
+                        } else {
+                            // Fret marker
+                            let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                            circle.setAttribute("cx", x + 32.5); circle.setAttribute("cy", y);
+                            circle.setAttribute("r", 10);
+                            circle.setAttribute("class", "note-marker");
+                            svg.appendChild(circle);
+
+                            let txt = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                            txt.setAttribute("x", x + 32.5); txt.setAttribute("y", y + 4);
+                            txt.setAttribute("class", "note-text");
+                            txt.textContent = currentNote;
+                            svg.appendChild(txt);
+                        }
+                    }
+                }
+            });
+        }
+
+        [rootSelect, typeSelect, tuningSelect].forEach(el => el.onchange = draw);
+        draw();
+    </script>
+</body>
+</html>
