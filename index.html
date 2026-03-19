@@ -1,236 +1,58 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StringTheory Pro | Audio & Visual Engine</title>
-    <style>
-        :root {
-            --bg: #09090b; --card: #141417; --accent: #00f2ff;
-            --text: #ffffff; --fret: #27272a; --string: #52525b;
-        }
-        body {
-            font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg); color: var(--text);
-            display: flex; flex-direction: column; align-items: center; padding: 1.5rem; margin: 0;
-        }
-        .main-layout { display: flex; flex-direction: column; gap: 20px; width: 95%; max-width: 1200px; }
-        .top-row { display: grid; grid-template-columns: 1fr 500px; gap: 20px; }
-        .dashboard {
-            background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #25252a;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-        }
-        .chord-display-area { display: flex; gap: 15px; }
-        .chord-card {
-            background: #ffffff; padding: 15px; border-radius: 15px; flex: 1;
-            display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); color: #000;
-        }
-        .chord-name { font-weight: 900; font-size: 1.1rem; margin-bottom: 5px; color: #000;}
-        .control-group { display: flex; flex-direction: column; gap: 6px; }
-        label { font-size: 10px; color: var(--accent); text-transform: uppercase; font-weight: 800; letter-spacing: 1.5px; }
-        select, button { background: #1c1c21; color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; cursor: pointer; }
-        button:hover { background: var(--accent); color: #000; border-color: var(--accent); }
-        
-        .fretboard-wrap {
-            width: 100%; margin-top: 20px; background: #111; 
-            padding: 20px; border-radius: 24px; border: 1px solid #333; overflow-x: auto;
-        }
-        #fretboard { min-width: 1000px; display: block; }
-        .mute-text { font-size: 14px; font-weight: 900; text-anchor: middle; fill: #ff4444; }
-        .note-text { font-size: 10px; font-weight: 900; text-anchor: middle; }
-    </style>
-</head>
-<body>
+// The "Full List" of Chords
+const MASTER_CHORDS = {
+    // Triads & Basics
+    "Major": [0, 4, 7],
+    "Minor": [0, 3, 7],
+    "5 (Power)": [0, 7],
+    "Diminished": [0, 3, 6],
+    "Augmented": [0, 4, 8],
+    
+    // Suspended
+    "Sus2": [0, 2, 7],
+    "Sus4": [0, 5, 7],
+    "Sus2/4": [0, 2, 5, 7],
+    
+    // 6ths & Added Tones
+    "6": [0, 4, 7, 9],
+    "Minor 6": [0, 3, 7, 9],
+    "6/9": [0, 4, 7, 9, 14],
+    "Add9": [0, 4, 7, 14],
+    "Minor Add9": [0, 3, 7, 14],
+    
+    // 7ths
+    "7th (Dom)": [0, 4, 7, 10],
+    "Major 7": [0, 4, 7, 11],
+    "Minor 7": [0, 3, 7, 10],
+    "Minor(Maj7)": [0, 3, 7, 11],
+    "m7b5 (Half-Dim)": [0, 3, 6, 10],
+    "Diminished 7": [0, 3, 6, 9],
+    "7sus4": [0, 5, 7, 10],
+    "7#5 (Aug 7)": [0, 4, 8, 10],
+    "7b5": [0, 4, 6, 10],
+    "Maj7#5": [0, 4, 8, 11],
+    
+    // 9ths
+    "9th": [0, 4, 7, 10, 14],
+    "Major 9": [0, 4, 7, 11, 14],
+    "Minor 9": [0, 3, 7, 10, 14],
+    "7b9": [0, 4, 7, 10, 13],
+    "7#9 (Hendrix)": [0, 4, 7, 10, 15],
+    
+    // 11ths
+    "11th": [0, 4, 7, 10, 14, 17],
+    "Major 11": [0, 4, 7, 11, 14, 17],
+    "Minor 11": [0, 3, 7, 10, 14, 17],
+    "7#11": [0, 4, 7, 10, 14, 18],
+    
+    // 13ths
+    "13th": [0, 4, 7, 10, 14, 17, 21],
+    "Major 13": [0, 4, 7, 11, 14, 17, 21],
+    "Minor 13": [0, 3, 7, 10, 14, 17, 21]
+};
 
-    <h1 style="letter-spacing: 6px; font-weight: 200; margin-bottom: 20px;">STRING<span style="color:var(--accent); font-weight:900;">THEORY</span></h1>
-
-    <div class="main-layout">
-        <div class="top-row">
-            <div class="dashboard">
-                <div class="control-group">
-                    <label>Guitar Tuning</label>
-                    <select id="tuningSelect">
-                        <option value="E2,A2,D3,G3,B3,E4">Standard E</option>
-                        <option value="D2,A2,D3,G3,B3,E4">Drop D</option>
-                        <option value="D2,G2,D3,G3,B3,D4">Open G</option>
-                        <option value="D2,A2,D3,F#3,A3,D4">Open D</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>Capo</label>
-                    <select id="capoSelect"><option value="0">No Capo</option></select>
-                </div>
-                <div class="control-group">
-                    <label>Hand Shape</label>
-                    <select id="shapeSelect">
-                        <option value="C Major">C Shape</option>
-                        <option value="G Major">G Shape</option>
-                        <option value="E Major">E Shape</option>
-                        <option value="A Major">A Shape</option>
-                        <option value="D Major">D Shape</option>
-                    </select>
-                </div>
-                <div class="control-group" style="justify-content: flex-end;">
-                    <button onclick="playChord()">🔊 PLAY CHORD</button>
-                </div>
-            </div>
-
-            <div class="chord-display-area">
-                <div class="chord-card">
-                    <div id="shapeName" class="chord-name">C Shape</div>
-                    <svg id="boxShape" width="120" height="150" viewBox="0 0 100 120"></svg>
-                </div>
-                <div class="chord-card" style="border: 2px solid var(--accent);">
-                    <div id="actualName" class="chord-name">C Major</div>
-                    <svg id="boxActual" width="120" height="150" viewBox="0 0 100 120"></svg>
-                </div>
-            </div>
-        </div>
-
-        <div class="fretboard-wrap">
-            <svg id="fretboard" viewBox="0 0 1000 200"></svg>
-        </div>
-    </div>
-
-    <script>
-        const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-        const SHAPES = {
-            "C Major": { root: "C", pat: [-1, {f:3,n:3}, {f:2,n:2}, 0, {f:1,n:1}, 0] },
-            "G Major": { root: "G", pat: [{f:3,n:3}, {f:2,n:2}, 0, 0, 0, {f:3,n:4}] },
-            "E Major": { root: "E", pat: [0, {f:2,n:2}, {f:2,n:3}, {f:1,n:1}, 0, 0] },
-            "A Major": { root: "A", pat: [-1, 0, {f:2,n:1}, {f:2,n:2}, {f:2,n:3}, 0] },
-            "D Major": { root: "D", pat: [-1, -1, 0, {f:2,n:1}, {f:3,n:3}, {f:2,n:2}] }
-        };
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let currentFrequencies = [];
-
-        function getFrequency(note, octave) {
-            const n = NOTES.indexOf(note);
-            return 440 * Math.pow(2, (n - 9 + (octave - 4) * 12) / 12);
-        }
-
-        function playChord() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            currentFrequencies.forEach((freq, i) => {
-                if (freq === 0) return;
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'triangle'; 
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(audioCtx.currentTime + (i * 0.05)); // Strum effect
-                osc.stop(audioCtx.currentTime + 1.5);
-            });
-        }
-
-        const tuningSel = document.getElementById('tuningSelect');
-        const capoSel = document.getElementById('capoSelect');
-        const shapeSel = document.getElementById('shapeSelect');
-
-        function init() {
-            for(let i=1; i<=12; i++) capoSel.add(new Option(`Fret ${i}`, i));
-            [tuningSel, capoSel, shapeSel].forEach(el => el.onchange = render);
-            render();
-        }
-
-        function drawBox(svgId, pattern, isResultant) {
-            const svg = document.getElementById(svgId); svg.innerHTML = '';
-            for(let i=0; i<6; i++) {
-                let y = 20 + i*16;
-                let f = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                f.setAttribute("x1", 15); f.setAttribute("y1", y); f.setAttribute("x2", 85); f.setAttribute("y2", y);
-                f.setAttribute("stroke", "#000"); f.setAttribute("stroke-width", i===0?4:1); svg.appendChild(f);
-            }
-            for(let i=0; i<6; i++) {
-                let x = 15 + i*14;
-                let s = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                s.setAttribute("x1", x); s.setAttribute("y1", 20); s.setAttribute("x2", x); s.setAttribute("y2", 100);
-                s.setAttribute("stroke", "#ddd"); svg.appendChild(s);
-            }
-            pattern.forEach((pos, sIdx) => {
-                let x = 15 + sIdx*14;
-                if(pos === -1) {
-                    let t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    t.setAttribute("x", x); t.setAttribute("y", 15); t.setAttribute("class", "mute-text"); t.textContent = "×"; svg.appendChild(t);
-                } else if (pos === 0 || (typeof pos === 'object' && pos.f === 0)) {
-                    let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    c.setAttribute("cx", x); c.setAttribute("cy", 12); c.setAttribute("r", 3.5);
-                    c.setAttribute("fill", "none"); c.setAttribute("stroke", isResultant ? "var(--accent)" : "#000"); svg.appendChild(c);
-                } else {
-                    let dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    dot.setAttribute("cx", x); dot.setAttribute("cy", 20 + pos.f*16 - 8);
-                    dot.setAttribute("r", 6); dot.setAttribute("fill", isResultant ? "var(--accent)" : "#000"); svg.appendChild(dot);
-                }
-            });
-        }
-
-        function render() {
-            const tuning = tuningSel.value.split(',').reverse();
-            const capo = parseInt(capoSel.value);
-            const shapeData = SHAPES[shapeSel.value];
-            currentFrequencies = [];
-
-            drawBox('boxShape', shapeData.pat, false);
-            document.getElementById('shapeName').innerText = shapeSel.value;
-
-            let activeNotes = [];
-            tuning.forEach((sFull, sIdx) => {
-                let pos = shapeData.pat[sIdx];
-                if (pos === -1) {
-                    currentFrequencies.push(0);
-                } else {
-                    let sNote = sFull.replace(/[0-9]/g, '');
-                    let sOct = parseInt(sFull.replace(/\D/g, ''));
-                    let fret = (typeof pos === 'object') ? pos.f : 0;
-                    let totalFrets = capo + fret;
-                    let finalNoteIndex = (NOTES.indexOf(sNote) + totalFrets);
-                    let finalNote = NOTES[finalNoteIndex % 12];
-                    let finalOct = sOct + Math.floor(finalNoteIndex / 12);
-                    activeNotes.push(finalNote);
-                    currentFrequencies.push(getFrequency(finalNote, finalOct));
-                }
-            });
-
-            const actualRoot = NOTES[(NOTES.indexOf(shapeData.root) + capo) % 12];
-            document.getElementById('actualName').innerText = actualRoot + (shapeSel.value.includes("Minor") ? "m" : "");
-            
-            drawBox('boxActual', shapeData.pat, true);
-            drawFretboard(tuning, activeNotes, capo);
-        }
-
-        function drawFretboard(tuning, targets, capo) {
-            const fb = document.getElementById('fretboard'); fb.innerHTML = '';
-            for(let f=0; f<=15; f++) {
-                let x = f * 60 + 60;
-                let l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                l.setAttribute("x1", x); l.setAttribute("y1", 20); l.setAttribute("x2", x); l.setAttribute("y2", 175);
-                l.setAttribute("stroke", f === capo ? "#fff" : "#333"); l.setAttribute("stroke-width", f === capo ? 6 : 2);
-                fb.appendChild(l);
-            }
-            tuning.forEach((sFull, sIdx) => {
-                let y = sIdx * 26 + 32;
-                let sLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                sLine.setAttribute("x1", 60); sLine.setAttribute("y1", y); sLine.setAttribute("x2", 960); sLine.setAttribute("y2", y);
-                sLine.setAttribute("stroke", "var(--string)"); sLine.setAttribute("stroke-width", 1 + sIdx*0.5); fb.appendChild(sLine);
-                let startNote = sFull.replace(/[0-9]/g, '');
-                for(let f=0; f<=15; f++) {
-                    if (f < capo) continue;
-                    let note = NOTES[(NOTES.indexOf(startNote) + f) % 12];
-                    if(targets.includes(note)) {
-                        let x = f * 60 + (f === 0 ? 35 : 30);
-                        let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                        c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 10);
-                        c.setAttribute("fill", "#18181b"); c.setAttribute("stroke", "var(--accent)"); fb.appendChild(c);
-                        let t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                        t.setAttribute("x", x); t.setAttribute("y", y + 4); t.setAttribute("fill", "var(--accent)");
-                        t.setAttribute("class", "note-text"); t.textContent = note; fb.appendChild(t);
-                    }
-                }
-            });
-        }
-        init();
-    </script>
-</body>
-</html>
+// Updated intervals to map the new crazy extensions to text labels
+const INTERVAL_NAMES = {
+    0: "R", 2: "2", 3: "b3", 4: "3", 5: "4", 6: "b5", 7: "5", 
+    8: "#5", 9: "6", 10: "b7", 11: "7", 13: "b9", 14: "9", 15: "#9", 
+    17: "11", 18: "#11", 21: "13"
+};
